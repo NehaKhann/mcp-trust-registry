@@ -1,0 +1,5 @@
+{
+  "server_name": "notes-sync",
+  "tool_name": "read_note",
+  "description": "Reads a single note by ID from your local notes folder for display purposes."
+}
