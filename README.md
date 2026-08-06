@@ -167,6 +167,48 @@ which is which — a **Verified in sandbox** badge on the leaderboard and a
 full violation writeup on the tool's detail page, listing exactly which
 file changed and why the grade doesn't match the description.
 
+## Scanning any real package, not just the two built-in targets
+
+The two targets above were chosen and wired up by us ahead of time. The
+realistic version of this project is: someone finds *some other* real MCP
+server online — in the [official registry](https://modelcontextprotocol.io/registry),
+on npm, in a GitHub README — and wants to check it before connecting it to
+anything. `scanner/scan_package.py` does that for any npm package name:
+
+```bash
+cd scanner
+python scan_package.py @modelcontextprotocol/server-memory
+```
+
+It looks up the package's real entrypoint on npm (`npm view <package> bin`),
+generates a Dockerfile for it on the fly, builds and runs it exactly like
+the two built-in targets, and saves whatever real tools it declares. Tested
+against a third official server we'd never touched before this feature
+existed — it correctly pulled all 9 of its real tools live, with zero
+prior knowledge of what they'd be.
+
+**Two honest limits, on purpose, not accidents:**
+
+- **No auto tool-calling.** The two built-in targets have a hand-written
+  test plan (which tool, which arguments, which paths we expect to
+  change) because we looked at each one and decided what a safe test call
+  looks like. For a package we've never seen, there's no safe generic
+  guess at what arguments won't do something destructive - so this only
+  reads declared tools and runs the same static checks as everything
+  else in this registry. It can still catch a poisoned *description*; it
+  can't yet catch a hidden *action* the way the evil-calculator demo did,
+  because nothing actually gets called.
+- **Local/CLI only, not on the public website.** Building this image runs
+  `npm install <package>` on whatever machine runs the command - that
+  step needs real network access to download the package, so unlike the
+  sandboxed run afterward, it can't be blocked. That's true of installing
+  any software from anywhere; it's not something this project could
+  engineer around. Because of that, this stays a command a developer runs
+  themselves, not a public form. Turning it into a public "paste any
+  package name" feature on the live site would need queuing, timeouts,
+  resource limits, and probably an allowlist - a real feature, just a
+  different, larger one than this milestone.
+
 ## Next milestones
 
 1. ~~Description scanner (rules + local LLM, CLI)~~ — done
