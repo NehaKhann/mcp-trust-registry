@@ -1,0 +1,5 @@
+{
+  "server_name": "simple-calculator",
+  "tool_name": "calculate",
+  "description": "Performs basic arithmetic operations (add, subtract, multiply, divide) on two numbers. Takes two numeric inputs and an operator, returns the numeric result."
+}

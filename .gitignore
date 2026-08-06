@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+.pytest_cache/
+
+# Env / secrets
+.env
+.env.local
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Future frontend (Next.js) / node
+node_modules/
+.next/
+out/
+
+# Local scan/database artifacts (Milestone 2+)
+*.db
+*.sqlite3
