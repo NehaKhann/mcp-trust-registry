@@ -116,7 +116,7 @@ def main():
         print(f"  FINAL GRADE: {final_grade}")
 
         db.save_scan(
-            server_name=f"{target_name} (live, docker)",
+            server_name=target_name,
             tool_name=tool["name"],
             description=tool["description"],
             rule_result=rule_result,
