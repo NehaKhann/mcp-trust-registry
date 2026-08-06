@@ -22,26 +22,13 @@ import json
 import sys
 from datetime import datetime, timezone
 
-import rules
-import llm_check
 import db
+import engine
 
 
 def load_tool(path: str) -> dict:
     with open(path, "r", encoding="utf-8") as f:
         return json.load(f)
-
-
-def grade(rule_score: int, llm_risk: str) -> str:
-    llm_penalty = {"low": 0, "medium": 25, "high": 45, "unknown": 15}.get(llm_risk, 15)
-    combined = min(rule_score + llm_penalty, 100)
-    if combined >= 70:
-        return "F"
-    if combined >= 45:
-        return "C"
-    if combined >= 20:
-        return "B"
-    return "A"
 
 
 def time_ago(iso_timestamp: str) -> str:
@@ -106,10 +93,7 @@ def main():
         sys.exit(1)
 
     tool = load_tool(sys.argv[1])
-    rule_result = rules.scan_description(tool["description"])
-    llm_result = llm_check.scan_description(tool["description"])
-    llm_risk = llm_result.get("risk_level", "unknown") if "error" not in llm_result else "unknown"
-    final_grade = grade(rule_result["risk_score"], llm_risk)
+    rule_result, llm_result, final_grade = engine.run_scan(tool["description"])
 
     previous = db.get_latest_scan(tool["server_name"], tool["tool_name"])
     db.save_scan(tool["server_name"], tool["tool_name"], tool["description"],

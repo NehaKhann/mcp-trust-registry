@@ -81,10 +81,33 @@ engines instead of one: the fixed rules only catch one weak signal
 alone would under-grade it. The version-history case is the whole reason
 this project is a *registry* instead of a one-shot script.
 
+## Web dashboard
+
+A FastAPI backend (`api/`) exposes the same registry over HTTP, and a
+Next.js frontend (`frontend/`) puts a real UI on top of it — a
+leaderboard, a per-tool timeline with grade-change markers, and a live
+"scan a tool" page anyone can try without touching a terminal.
+
+```bash
+# terminal 1 — API (wraps the exact same scanner/db.py the CLI uses)
+cd api
+pip install -r requirements.txt
+python -m uvicorn main:app --port 8001 --reload
+
+# terminal 2 — frontend
+cd frontend
+npm install
+npm run dev
+```
+
+Open **http://localhost:3000**. The dashboard, detail pages, and CLI all
+read/write the same SQLite registry, so a scan from any of them shows up
+everywhere else.
+
 ## Next milestones
 
 1. ~~Description scanner (rules + local LLM, CLI)~~ — done
 2. ~~Save every scan to a database, detect grade changes over time~~ — done
-3. Run a real MCP server in Docker and compare declared vs. actual behavior
-4. Public web dashboard (Next.js)
+3. ~~Public web dashboard (Next.js + FastAPI)~~ — done, built ahead of #4 below
+4. Run a real MCP server in Docker and compare declared vs. actual behavior — plugs into the same UI once done
 5. Deploy live for free, write the full portfolio README

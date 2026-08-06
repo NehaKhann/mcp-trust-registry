@@ -1,0 +1,96 @@
+@import "tailwindcss";
+
+/* Tailwind v4: enable class-based dark mode (.dark on <html>), not just
+   prefers-color-scheme, so the toggle button in the header actually works. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --bg: #FAFAFA;
+  --surface: #FFFFFF;
+  --surface-raised: #F4F5F7;
+  --border: #E3E5EA;
+  --text: #14171F;
+  --text-muted: #6B7280;
+  --text-faint: #9AA1AE;
+  --accent: #4F46E5;
+  --accent-soft: #EEF0FE;
+  --accent-contrast: #FFFFFF;
+
+  --grade-a: #059669;
+  --grade-a-soft: #E7F7F0;
+  --grade-b: #2563EB;
+  --grade-b-soft: #EAF1FE;
+  --grade-c: #B45309;
+  --grade-c-soft: #FCF3E4;
+  --grade-f: #DC2626;
+  --grade-f-soft: #FCEBEB;
+}
+
+.dark {
+  --bg: #0A0B0F;
+  --surface: #121319;
+  --surface-raised: #191B22;
+  --border: #24262F;
+  --text: #EDEEF1;
+  --text-muted: #9198A8;
+  --text-faint: #5B6272;
+  --accent: #7C77F5;
+  --accent-soft: #1B1A33;
+  --accent-contrast: #0A0B0F;
+
+  --grade-a: #3DD68C;
+  --grade-a-soft: #12251E;
+  --grade-b: #5B9DF5;
+  --grade-b-soft: #131E30;
+  --grade-c: #F2B84B;
+  --grade-c-soft: #2B2212;
+  --grade-f: #F2716B;
+  --grade-f-soft: #2E1616;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-border: var(--border);
+  --color-text: var(--text);
+  --color-text-muted: var(--text-muted);
+  --color-text-faint: var(--text-faint);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-contrast: var(--accent-contrast);
+
+  --color-grade-a: var(--grade-a);
+  --color-grade-a-soft: var(--grade-a-soft);
+  --color-grade-b: var(--grade-b);
+  --color-grade-b-soft: var(--grade-b-soft);
+  --color-grade-c: var(--grade-c);
+  --color-grade-c-soft: var(--grade-c-soft);
+  --color-grade-f: var(--grade-f);
+  --color-grade-f-soft: var(--grade-f-soft);
+
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, "SF Mono", monospace;
+}
+
+* {
+  border-color: var(--color-border);
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+}
+
+::selection {
+  background: var(--color-accent);
+  color: var(--color-accent-contrast);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
