@@ -36,6 +36,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 Registry
               </Link>
               <Link
+                href="/story"
+                className="rounded-lg px-3 py-1.5 text-sm text-text-muted transition-colors hover:text-text hover:bg-surface-raised"
+              >
+                Why this matters
+              </Link>
+              <Link
                 href="/scan"
                 className="rounded-lg bg-accent px-3 py-1.5 text-sm font-medium text-accent-contrast transition-opacity hover:opacity-90"
               >
