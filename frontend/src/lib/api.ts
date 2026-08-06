@@ -2,12 +2,15 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8001";
 
 export type Grade = "A" | "B" | "C" | "F";
 
+export type ScanSource = "manual" | "docker-sandbox";
+
 export type LeaderboardRow = {
   server_name: string;
   tool_name: string;
   grade: Grade;
   scan_count: number;
   scanned_at: string;
+  source: ScanSource;
 };
 
 export type ScanRecord = {
@@ -23,6 +26,8 @@ export type ScanRecord = {
   llm_reasoning: string | null;
   grade: Grade;
   scanned_at: string;
+  source: ScanSource;
+  behavior_flags: string | null; // JSON-encoded string[], only set on a sandbox-caught violation
 };
 
 export type ScanResponse = {

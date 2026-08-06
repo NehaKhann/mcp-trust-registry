@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { api, type LeaderboardRow } from "@/lib/api";
 import { GradeBadge } from "@/components/GradeBadge";
+import { SourceBadge } from "@/components/SourceBadge";
 import { timeAgo } from "@/lib/format";
 
 export default function DashboardPage() {
@@ -82,6 +83,7 @@ export default function DashboardPage() {
               <tr className="border-b border-border bg-surface-raised text-left text-xs uppercase tracking-wide text-text-faint">
                 <th className="px-4 py-3 font-medium">Server / Tool</th>
                 <th className="px-4 py-3 font-medium">Grade</th>
+                <th className="px-4 py-3 font-medium">Verification</th>
                 <th className="px-4 py-3 font-medium">Scans</th>
                 <th className="px-4 py-3 font-medium">Last checked</th>
               </tr>
@@ -100,6 +102,9 @@ export default function DashboardPage() {
                   </td>
                   <td className="px-4 py-3.5">
                     <GradeBadge grade={r.grade} size="sm" />
+                  </td>
+                  <td className="px-4 py-3.5">
+                    <SourceBadge source={r.source} />
                   </td>
                   <td className="px-4 py-3.5 tabular-nums text-text-muted">{r.scan_count}</td>
                   <td className="px-4 py-3.5 text-text-muted">{timeAgo(r.scanned_at)}</td>

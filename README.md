@@ -2,10 +2,13 @@
 
 Checks whether an MCP tool's description is honestly describing itself to a
 human, or secretly trying to manipulate the AI reading it ("tool
-poisoning") — and now keeps a history, so a tool that behaves well at
-first and turns malicious in a later version ("a rug pull") gets caught
-automatically. Runs entirely for $0 — the AI check uses a local Ollama
-model, no API key required.
+poisoning"); keeps a history so a tool that behaves well at first and turns
+malicious in a later version ("a rug pull") gets caught automatically; and
+runs real MCP servers in a network-blocked Docker sandbox to catch what a
+perfectly innocent-sounding description can't — a tool that's clean in
+every static check but still does something it never declared. Runs
+entirely for $0 — the AI check uses a local Ollama model, no API key
+required.
 
 ## How it works
 
@@ -104,10 +107,70 @@ Open **http://localhost:3000**. The dashboard, detail pages, and CLI all
 read/write the same SQLite registry, so a scan from any of them shows up
 everywhere else.
 
+## Behavioral sandbox: real servers, not files we wrote
+
+Everything above only ever reads a *description* someone typed. That's a
+structural limit: a server whose description is completely honest-sounding
+sails through both engines above with a perfect score, no matter what its
+code actually does. Milestone 3 closes that gap by running a real MCP
+server inside Docker — network-blocked, filesystem-diffed — and grading
+what it *does*, not just what it *says*.
+
+Two real targets, both driven through a hand-written MCP stdio client
+(`scanner/mcp_client.py`, plain JSON-RPC over stdin/stdout — no SDK, so
+nothing about the protocol is hidden behind a library):
+
+- **`filesystem`** — the actual official reference MCP server
+  (`@modelcontextprotocol/server-filesystem`, published by the Model
+  Context Protocol maintainers). 14 real tools, read live off a running
+  container, fed through the exact same `engine.run_scan()` from
+  Milestones 1-2 for the first time on data neither of us wrote.
+- **`evil-calculator`** — a server we wrote ourselves (`runtime/evil_calculator/server.py`)
+  whose tool description is completely innocent: *"Performs basic
+  arithmetic on two numbers."* No hidden-instruction language, nothing a
+  text scanner could ever flag. When called, it also quietly copies a
+  planted secret file into a disguised backup file.
+
+```bash
+cd runtime/filesystem && docker build -t mcp-sandbox-filesystem . && cd ../..
+cd runtime/evil_calculator && docker build -t mcp-sandbox-evil-calculator . && cd ../..
+
+cd scanner
+python scan_live.py filesystem        # real server, real tools, clean behavior
+python scan_live.py evil-calculator   # innocent description, caught anyway
+```
+
+The second run is the entire point of this milestone:
+
+```
+--- calculate ---
+  Declared: "Performs basic arithmetic (add, subtract, multiply, divide) on two numbers."
+  Static grade (description only): A
+  [!!!] unexpected file created: notes/backup.txt
+  Behavior check: VIOLATION - grade overridden to F regardless of description
+  FINAL GRADE: F
+```
+
+Both the rule engine (0/100) and the local LLM ("low risk, no phrases
+suggesting undisclosed actions") clear it completely — grading it **A** on
+text alone. The sandbox catches it anyway, because it isn't reading text:
+`scanner/sandbox.py` snapshots the mounted sandbox directory (SHA-256 per
+file) before and after every tool call and diffs them. Any file that
+changes outside what that specific call was expected to touch is an
+unexplained action, full stop, regardless of how the tool describes
+itself. `--network none` on the container means that even if a tool wanted
+to exfiltrate data over the network instead, it structurally couldn't.
+
+Every sandbox scan is saved with `source="docker-sandbox"` (vs. `"manual"`
+for anything scanned from a file or the web form), and the dashboard shows
+which is which — a **Verified in sandbox** badge on the leaderboard and a
+full violation writeup on the tool's detail page, listing exactly which
+file changed and why the grade doesn't match the description.
+
 ## Next milestones
 
 1. ~~Description scanner (rules + local LLM, CLI)~~ — done
 2. ~~Save every scan to a database, detect grade changes over time~~ — done
 3. ~~Public web dashboard (Next.js + FastAPI)~~ — done, built ahead of #4 below
-4. Run a real MCP server in Docker and compare declared vs. actual behavior — plugs into the same UI once done
+4. ~~Run a real MCP server in Docker and compare declared vs. actual behavior~~ — done
 5. Deploy live for free, write the full portfolio README

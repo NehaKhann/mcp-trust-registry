@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { api, type ScanRecord } from "@/lib/api";
 import { GradeBadge, GradeLabel } from "@/components/GradeBadge";
+import { SourceBadge } from "@/components/SourceBadge";
 import { timeAgo, safeParseArray } from "@/lib/format";
 
 export default function ToolDetailPage() {
@@ -37,6 +38,7 @@ export default function ToolDetailPage() {
   const latest = scans[scans.length - 1];
   const ruleFlags = safeParseArray(latest.rule_flags);
   const llmPhrases = safeParseArray(latest.llm_flagged_phrases);
+  const behaviorFlags = latest.behavior_flags ? safeParseArray(latest.behavior_flags) : [];
 
   return (
     <div>
@@ -44,7 +46,7 @@ export default function ToolDetailPage() {
         ← Registry
       </Link>
 
-      <div className="mb-8 flex items-start justify-between gap-4">
+      <div className="mb-4 flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">{server}</h1>
           <div className="mt-0.5 font-mono text-sm text-text-faint">{tool}</div>
@@ -54,6 +56,29 @@ export default function ToolDetailPage() {
           <GradeLabel grade={latest.grade} />
         </div>
       </div>
+
+      <div className="mb-8">
+        <SourceBadge source={latest.source} />
+      </div>
+
+      {behaviorFlags.length > 0 && (
+        <div className="mb-8 rounded-xl border border-grade-f/40 bg-grade-f-soft px-5 py-4">
+          <div className="mb-2 flex items-center gap-2 font-semibold text-grade-f">
+            <span>⚠</span> Behavioral violation caught in sandbox
+          </div>
+          <p className="mb-2 text-sm text-text">
+            This tool&apos;s description read as safe to the static engines above — the grade was overridden to{" "}
+            <b>F</b> because of what it actually did when run in an isolated, network-blocked container:
+          </p>
+          <ul className="space-y-1">
+            {behaviorFlags.map((f, i) => (
+              <li key={i} className="font-mono text-xs text-grade-f">
+                • {f}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <Section title="Current declared description">
         <p className="rounded-lg bg-surface-raised px-4 py-3.5 font-mono text-sm leading-relaxed text-text">
