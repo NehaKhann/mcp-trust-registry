@@ -198,16 +198,23 @@ prior knowledge of what they'd be.
   else in this registry. It can still catch a poisoned *description*; it
   can't yet catch a hidden *action* the way the evil-calculator demo did,
   because nothing actually gets called.
-- **Local/CLI only, not on the public website.** Building this image runs
-  `npm install <package>` on whatever machine runs the command - that
-  step needs real network access to download the package, so unlike the
-  sandboxed run afterward, it can't be blocked. That's true of installing
-  any software from anywhere; it's not something this project could
-  engineer around. Because of that, this stays a command a developer runs
-  themselves, not a public form. Turning it into a public "paste any
-  package name" feature on the live site would need queuing, timeouts,
-  resource limits, and probably an allowlist - a real feature, just a
-  different, larger one than this milestone.
+- **On the website too now, but off by default everywhere.** `/scan` has a
+  second tab, "Scan a live npm package," that calls `POST
+  /api/scan-package` and runs the exact same `scan_package()` function as
+  the CLI. Building the image still runs `npm install <package>` on
+  whatever machine runs the request - that step needs real network access,
+  so unlike the sandboxed run afterward, it can't be blocked. That's true
+  of installing any software from anywhere; not something this project
+  could engineer around. Because of that, the endpoint checks an
+  `ALLOW_LIVE_PACKAGE_SCAN` environment variable and refuses (403) unless
+  it's explicitly set to `true` - safe by default the moment this gets
+  deployed somewhere strangers can reach it, without anyone having to
+  remember to lock it down later. Turn it on locally:
+
+  ```bash
+  cd api
+  ALLOW_LIVE_PACKAGE_SCAN=true python -m uvicorn main:app --port 8001 --reload
+  ```
 
 ## Next milestones
 

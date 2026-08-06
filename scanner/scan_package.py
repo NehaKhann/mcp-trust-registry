@@ -5,14 +5,17 @@ use after finding a real tool listed somewhere (the official MCP registry,
 npm, a GitHub README) and wanting to check it before connecting it to
 anything real.
 
-Local/CLI only, on purpose. Building this server's image means running
-`npm install <package>` on this machine, which needs real network access -
-that step can never be sandboxed the way running the finished tool
-afterward can be, because you can't download something with no network.
-That's true of installing any software from anywhere; it's not a
-shortcut this project takes. Because of that, this stays a command you
-run yourself rather than a public form a stranger could submit arbitrary
-package names to.
+The core function here (scan_package) is called from two places:
+- this file's own CLI (`python scan_package.py <package>`)
+- api/main.py's /api/scan-package endpoint, so the website can trigger
+  the exact same sandboxed scan - see that file for why it's disabled
+  by default anywhere this gets deployed.
+
+Building the image means running `npm install <package>` wherever this
+runs, which needs real network access - that step can never be sandboxed
+the way running the finished tool afterward can be, because you can't
+download something with no network. That's true of installing any
+software from anywhere; it's not a shortcut this project takes.
 
 Usage:
     python scan_package.py <npm-package-name> [mount-arg]
@@ -25,8 +28,7 @@ tool - we have no pre-written, known-safe arguments for a package we've
 never seen. It only reads the server's REAL declared tools and runs them
 through the same static engine as everything else. That's a real,
 honest limitation: no behavioral verification here, only description-
-level checks. See README for how to add a tool-call plan for a specific
-package once you've looked at what it actually expects.
+level checks.
 """
 
 import json
@@ -60,11 +62,17 @@ NPM = shutil.which("npm")
 DOCKER = shutil.which("docker")
 
 
+class PackageScanError(Exception):
+    """A user-facing failure (bad package name, npm 404, Docker build
+    failure, MCP handshake failure) - safe to show the message directly,
+    as opposed to an unexpected internal error."""
+
+
 def lookup_bin_name(package_name: str) -> str:
     """Asks npm's registry what command this package actually installs -
     the real entrypoint, not a guess. Needs network; doesn't need Docker."""
     if not NPM:
-        raise RuntimeError("npm isn't on PATH - can't look up package info.")
+        raise PackageScanError("npm isn't on PATH - can't look up package info.")
     result = subprocess.run(
         [NPM, "view", package_name, "bin", "--json"],
         capture_output=True, text=True,
@@ -72,12 +80,12 @@ def lookup_bin_name(package_name: str) -> str:
     try:
         data = json.loads(result.stdout)
     except json.JSONDecodeError:
-        raise RuntimeError(f"npm gave an unreadable response for '{package_name}'. stderr:\n{result.stderr[-500:]}")
+        raise PackageScanError(f"npm gave an unreadable response for '{package_name}'. stderr:\n{result.stderr[-500:]}")
 
     if isinstance(data, dict) and "error" in data:
-        raise RuntimeError(f"npm couldn't find '{package_name}': {data['error']['summary']}")
+        raise PackageScanError(f"npm couldn't find '{package_name}': {data['error']['summary']}")
     if not data:
-        raise RuntimeError(
+        raise PackageScanError(
             f"'{package_name}' doesn't declare a runnable command (no \"bin\" field in its "
             f"package.json) - it may be a library, not something you can run directly as a server."
         )
@@ -85,6 +93,8 @@ def lookup_bin_name(package_name: str) -> str:
 
 
 def build_sandbox_image(package_name: str, bin_name: str) -> str:
+    if not DOCKER:
+        raise PackageScanError("docker isn't on PATH - can't build a sandbox image.")
     safe_tag = re.sub(r"[^a-z0-9]+", "-", package_name.lower()).strip("-")
     image_tag = f"mcp-sandbox-pkg-{safe_tag}"
 
@@ -92,46 +102,32 @@ def build_sandbox_image(package_name: str, bin_name: str) -> str:
 
     with tempfile.TemporaryDirectory() as tmp:
         (Path(tmp) / "Dockerfile").write_text(dockerfile)
-        print(f"Building sandbox image for '{package_name}' (this step needs network - installing from npm)...")
         result = subprocess.run([DOCKER, "build", "-t", image_tag, tmp], capture_output=True, text=True)
         if result.returncode != 0:
-            raise RuntimeError(f"Docker build failed:\n{result.stderr[-1500:]}")
+            raise PackageScanError(f"Docker build failed:\n{result.stderr[-1500:]}")
     return image_tag
 
 
-def main():
-    if len(sys.argv) < 2:
-        print("Usage: python scan_package.py <npm-package-name> [mount-arg]")
-        print("Example: python scan_package.py @modelcontextprotocol/server-memory")
-        sys.exit(1)
-
-    package_name = sys.argv[1]
-    mount_arg = sys.argv[2] if len(sys.argv) > 2 else "/sandbox"
-
+def scan_package(package_name: str, mount_arg: str = "/sandbox") -> dict:
+    """Does the full scan: validate -> look up real entrypoint -> build a
+    sandbox image -> run it (--network none) -> static-grade every REAL
+    declared tool -> save each to the registry. Returns a structured
+    result; raises PackageScanError with a message safe to show a user
+    for anything that goes wrong along the way.
+    """
     if not NPM_NAME_RE.match(package_name):
-        print(f"[X] '{package_name}' doesn't look like a real npm package name - refusing to run it.")
-        print(f"    Expected something like 'my-package' or '@scope/my-package'.")
-        sys.exit(1)
+        raise PackageScanError(
+            f"'{package_name}' doesn't look like a real npm package name - refusing to run it. "
+            f"Expected something like 'my-package' or '@scope/my-package'."
+        )
 
-    print(f"Looking up '{package_name}' on npm...")
-    try:
-        bin_name = lookup_bin_name(package_name)
-    except RuntimeError as e:
-        print(f"\n[X] {e}")
-        sys.exit(1)
-    print(f"Found real entrypoint: {bin_name}\n")
-
-    try:
-        image_tag = build_sandbox_image(package_name, bin_name)
-    except RuntimeError as e:
-        print(f"\n[X] {e}")
-        sys.exit(1)
-    print(f"Built {image_tag}. Everything from here runs with --network none.\n")
+    bin_name = lookup_bin_name(package_name)
+    image_tag = build_sandbox_image(package_name, bin_name)
 
     sandbox.reset_sandbox_dir(SANDBOX_DIR, SEED_FILES)
 
     try:
-        result = sandbox.run_sandboxed_scan(
+        raw = sandbox.run_sandboxed_scan(
             image=image_tag,
             sandbox_host_dir=SANDBOX_DIR,
             container_mount=mount_arg,
@@ -139,24 +135,15 @@ def main():
                             # its tools with, so we only read what it declares.
         )
     except Exception as e:
-        print(f"[X] Could not complete the MCP handshake with this server: {e}")
-        print(f"    Some servers need specific startup arguments or environment")
-        print(f"    variables this generic scanner doesn't know to provide.")
-        print(f"    Try: python scan_package.py {package_name} <a-different-mount-arg>")
-        sys.exit(1)
+        raise PackageScanError(
+            f"Could not complete the MCP handshake with this server: {e}. Some servers need "
+            f"specific startup arguments or environment variables this generic scanner doesn't "
+            f"know to provide - try a different mount-arg."
+        )
 
-    print("=" * 68)
-    print(f"  Server: {result['server_info'].get('name', '?')} v{result['server_info'].get('version', '?')}")
-    print(f"  Declared {len(result['declared_tools'])} tool(s) [REAL, live from npm: {package_name}]")
-    print("=" * 68)
-
-    for tool in result["declared_tools"]:
+    tools = []
+    for tool in raw["declared_tools"]:
         rule_result, llm_result, static_grade = engine.run_scan(tool["description"])
-
-        print(f"\n--- {tool['name']} ---")
-        print(f"  Declared: \"{tool['description'][:100]}{'...' if len(tool['description']) > 100 else ''}\"")
-        print(f"  Static grade (description only): {static_grade}")
-        print(f"  Behavior check: not exercised (unknown package - no auto tool-calling)")
 
         db.save_scan(
             server_name=package_name,
@@ -169,8 +156,54 @@ def main():
             behavior_flags=None,
         )
 
+        tools.append({
+            "name": tool["name"],
+            "description": tool["description"],
+            "grade": static_grade,
+            "rule_result": rule_result,
+            "llm_result": llm_result,
+        })
+
+    return {
+        "package_name": package_name,
+        "bin_name": bin_name,
+        "server_info": raw["server_info"],
+        "tools": tools,
+    }
+
+
+def main():
+    if len(sys.argv) < 2:
+        print("Usage: python scan_package.py <npm-package-name> [mount-arg]")
+        print("Example: python scan_package.py @modelcontextprotocol/server-memory")
+        sys.exit(1)
+
+    package_name = sys.argv[1]
+    mount_arg = sys.argv[2] if len(sys.argv) > 2 else "/sandbox"
+
+    print(f"Looking up '{package_name}' on npm...")
+    try:
+        result = scan_package(package_name, mount_arg)
+    except PackageScanError as e:
+        print(f"\n[X] {e}")
+        sys.exit(1)
+
+    print(f"Found real entrypoint: {result['bin_name']}")
+    print(f"Built and ran sandbox image. Everything ran with --network none.\n")
+
+    print("=" * 68)
+    print(f"  Server: {result['server_info'].get('name', '?')} v{result['server_info'].get('version', '?')}")
+    print(f"  Declared {len(result['tools'])} tool(s) [REAL, live from npm: {package_name}]")
+    print("=" * 68)
+
+    for tool in result["tools"]:
+        print(f"\n--- {tool['name']} ---")
+        print(f"  Declared: \"{tool['description'][:100]}{'...' if len(tool['description']) > 100 else ''}\"")
+        print(f"  Static grade (description only): {tool['grade']}")
+        print(f"  Behavior check: not exercised (unknown package - no auto tool-calling)")
+
     print(f"\n{'=' * 68}")
-    print(f"  Saved {len(result['declared_tools'])} scan(s) to the registry as '{package_name}'.")
+    print(f"  Saved {len(result['tools'])} scan(s) to the registry as '{package_name}'.")
     print(f"  Static checks only - no tool was actually called, so this can't")
     print(f"  catch the kind of behavioral violation Milestone 3's evil-calculator")
     print(f"  demo did. It CAN still catch a poisoned description, same as any")

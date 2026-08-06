@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { api, type ScanResponse } from "@/lib/api";
 import { GradeBadge, GradeLabel } from "@/components/GradeBadge";
+import { LivePackageScan } from "@/components/LivePackageScan";
 
 type Example = {
   label: string;
@@ -46,6 +47,7 @@ const EXAMPLES: Example[] = [
 ];
 
 export default function ScanPage() {
+  const [mode, setMode] = useState<"paste" | "live">("paste");
   const [serverName, setServerName] = useState("");
   const [toolName, setToolName] = useState("");
   const [description, setDescription] = useState("");
@@ -100,6 +102,19 @@ export default function ScanPage() {
         </p>
       </div>
 
+      <div className="mb-8 flex gap-1 border-b border-border">
+        <TabButton active={mode === "paste"} onClick={() => setMode("paste")}>
+          Paste a description
+        </TabButton>
+        <TabButton active={mode === "live"} onClick={() => setMode("live")}>
+          Scan a live npm package
+        </TabButton>
+      </div>
+
+      {mode === "live" && <LivePackageScan />}
+
+      {mode === "paste" && (
+        <>
       <p className="mb-3 text-xs text-text-faint">
         The first three are examples written for this project. The last one is copied word-for-word
         from a real MCP server&apos;s actual source code on GitHub — nothing about it was staged.
@@ -239,7 +254,33 @@ export default function ScanPage() {
           </div>
         </div>
       )}
+        </>
+      )}
     </div>
+  );
+}
+
+function TabButton({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`-mb-px border-b-2 px-3 py-2.5 text-sm font-medium transition-colors ${
+        active
+          ? "border-accent text-text"
+          : "border-transparent text-text-muted hover:text-text"
+      }`}
+    >
+      {children}
+    </button>
   );
 }
 

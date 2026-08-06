@@ -49,6 +49,24 @@ export type ScanResponse = {
   grade_changed: boolean;
 };
 
+export type PackageScanResult = {
+  package_name: string;
+  bin_name: string;
+  server_info: { name?: string; version?: string };
+  tools: {
+    name: string;
+    description: string;
+    grade: Grade;
+    rule_result: { engine: string; risk_score: number; flags: { reason: string }[] };
+    llm_result: { engine: string; risk_level?: string; reasoning?: string; error?: string };
+  }[];
+};
+
+export type HealthStatus = {
+  status: string;
+  live_package_scan_enabled: boolean;
+};
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, {
     ...init,
@@ -68,4 +86,7 @@ export const api = {
     request<ScanRecord[]>(`/api/history/${encodeURIComponent(server)}/${encodeURIComponent(tool)}`),
   scan: (payload: { server_name: string; tool_name: string; description: string }) =>
     request<ScanResponse>("/api/scan", { method: "POST", body: JSON.stringify(payload) }),
+  health: () => request<HealthStatus>("/api/health"),
+  scanPackage: (payload: { package_name: string; mount_arg?: string }) =>
+    request<PackageScanResult>("/api/scan-package", { method: "POST", body: JSON.stringify(payload) }),
 };
