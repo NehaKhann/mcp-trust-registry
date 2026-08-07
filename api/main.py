@@ -57,7 +57,15 @@ def leaderboard():
     return db.get_leaderboard()
 
 
-@app.get("/api/history/{server_name}/{tool_name}")
+
+# server_name uses the ":path" converter because scoped npm packages
+# (e.g. "@modelcontextprotocol/server-memory") contain a literal "/" -
+# FastAPI's default path parameter can't match that even when it's
+# percent-encoded in the request, since Starlette decodes the full path
+# before route matching. ":path" is greedy but backtracks correctly here
+# since tool_name never contains a slash, so it always splits on the
+# LAST "/" in the URL.
+@app.get("/api/history/{server_name:path}/{tool_name}")
 def history(server_name: str, tool_name: str):
     rows = db.get_history(server_name, tool_name)
     if not rows:
