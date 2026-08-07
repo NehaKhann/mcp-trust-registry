@@ -7,8 +7,10 @@ malicious in a later version ("a rug pull") gets caught automatically; and
 runs real MCP servers in a network-blocked Docker sandbox to catch what a
 perfectly innocent-sounding description can't — a tool that's clean in
 every static check but still does something it never declared. Runs
-entirely for $0 — the AI check uses a local Ollama model, no API key
-required.
+entirely for $0 — locally, the AI check uses a local Ollama model, no API
+key required; deployed, it uses Groq's free tier instead, since a public
+server can't reach a model running on a developer's laptop (see
+[Deployment](#deployment)).
 
 ## How it works
 
@@ -19,10 +21,13 @@ side by side, never blended into one opaque score:
   dangerous patterns (hidden-instruction phrasing, credential references,
   fake system tags). Fast, predictable, cannot be fooled by clever wording
   it wasn't written to catch.
-- **AI engine** (`scanner/llm_check.py`) — a local model (`qwen2.5:3b` via
-  Ollama) reads the description and judges intent semantically, catching
-  cases the fixed rules miss. Forced into structured JSON output so the
-  result is always machine-parseable.
+- **AI engine** (`scanner/llm_check.py`) — a model reads the description
+  and judges intent semantically, catching cases the fixed rules miss.
+  Forced into structured JSON output so the result is always machine-
+  parseable. Which model answers is pluggable (`LLM_PROVIDER` env var):
+  local `qwen2.5:3b` via Ollama by default, or Groq's hosted free tier
+  when deployed — same prompt, same output shape, same downstream code
+  either way.
 
 Every scan result is saved to a local SQLite registry (`scanner/db.py`).
 Before saving a new scan, the scanner checks whether this exact
@@ -215,6 +220,32 @@ prior knowledge of what they'd be.
   cd api
   ALLOW_LIVE_PACKAGE_SCAN=true python -m uvicorn main:app --port 8001 --reload
   ```
+
+## Deployment
+
+The whole point of a local model is that it's free and needs no signup —
+but a deployed server can't dial into Ollama running on a developer's own
+laptop, so something has to change for production. Rather than run Ollama
+on the deployment host itself (most free-tier hosts don't have the RAM
+for it reliably), the AI engine is provider-pluggable:
+
+| | Local dev (default) | Deployed |
+|---|---|---|
+| Provider | Ollama, `localhost:11434` | [Groq](https://console.groq.com) free tier |
+| Model | `qwen2.5:3b` | `llama-3.1-8b-instant` |
+| Cost | $0, always | $0 (free tier: 30 req/min, 1,000/day) |
+| Setup | `ollama serve` | One free API key |
+
+Set on the deployed API only:
+
+```bash
+LLM_PROVIDER=groq
+GROQ_API_KEY=<your key from console.groq.com>
+```
+
+Nothing else changes — `engine.py`, `scan.py`, `api/main.py` all just call
+`llm_check.scan_description()` and get the same shape back regardless of
+which provider answered.
 
 ## Next milestones
 
