@@ -6,6 +6,7 @@ import Link from "next/link";
 import { api, type ScanRecord } from "@/lib/api";
 import { GradeBadge, GradeLabel } from "@/components/GradeBadge";
 import { SourceBadge } from "@/components/SourceBadge";
+import { EngineResultPanel } from "@/components/EngineResultPanel";
 import { timeAgo, safeParseArray } from "@/lib/format";
 
 export default function ToolDetailPage() {
@@ -42,7 +43,7 @@ export default function ToolDetailPage() {
 
   return (
     <div>
-      <Link href="/" className="mb-6 inline-flex items-center gap-1 text-sm text-text-muted hover:text-text">
+      <Link href="/registry" className="mb-6 inline-flex items-center gap-1 text-sm text-text-muted hover:text-text">
         ← Registry
       </Link>
 
@@ -86,36 +87,14 @@ export default function ToolDetailPage() {
         </p>
       </Section>
 
-      <div className="grid grid-cols-2 gap-4">
-        <Section title="Rule-based engine">
-          <div className="mb-2 font-mono text-sm text-text-muted">Risk score: {latest.rule_score}/100</div>
-          {ruleFlags.length === 0 ? (
-            <div className="text-sm text-text-faint">No known-dangerous patterns matched.</div>
-          ) : (
-            <ul className="space-y-1.5">
-              {ruleFlags.map((f, i) => (
-                <li key={i} className="flex gap-2 text-sm text-grade-f">
-                  <span>⚠</span>
-                  <span className="text-text">{f}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Section>
-
-        <Section title="AI engine (semantic)">
-          <div className="mb-2 font-mono text-sm text-text-muted">Risk level: {latest.llm_risk_level ?? "—"}</div>
-          {llmPhrases.length > 0 && (
-            <ul className="mb-2 space-y-1.5">
-              {llmPhrases.map((p, i) => (
-                <li key={i} className="rounded bg-grade-f-soft px-2 py-1 font-mono text-xs text-grade-f">
-                  &ldquo;{p}&rdquo;
-                </li>
-              ))}
-            </ul>
-          )}
-          {latest.llm_reasoning && <p className="text-sm text-text-muted">{latest.llm_reasoning}</p>}
-        </Section>
+      <div className="mb-6">
+        <EngineResultPanel
+          ruleScore={latest.rule_score}
+          ruleFlags={ruleFlags}
+          llmRiskLevel={latest.llm_risk_level}
+          llmFlaggedPhrases={llmPhrases}
+          llmReasoning={latest.llm_reasoning}
+        />
       </div>
 
       <Section title={`Timeline (${scans.length} scan${scans.length === 1 ? "" : "s"})`}>

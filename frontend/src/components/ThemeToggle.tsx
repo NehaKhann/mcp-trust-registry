@@ -3,9 +3,17 @@
 import { useEffect, useState } from "react";
 
 export function ThemeToggle() {
+  // Deliberately NOT read from document in the useState initializer: that
+  // runs during Next's server render too, where `document` doesn't exist,
+  // so it would compute a different value there than on the client and
+  // produce a real hydration mismatch (tried this, broke it, reverted).
+  // Server and first client render both start from `true`; the effect
+  // below corrects it immediately after mount, once `document` is real -
+  // a legitimate case for setState-in-effect, not just extra-render waste.
   const [dark, setDark] = useState(true);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- see comment above
     setDark(document.documentElement.classList.contains("dark"));
   }, []);
 

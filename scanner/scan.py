@@ -75,13 +75,13 @@ def print_report(tool: dict, rule_result: dict, llm_result: dict,
     print(f"  TRUST GRADE: {final_grade}")
 
     if previous is None:
-        print(f"  (first scan of this server/tool -- saved to registry)")
+        print("  (first scan of this server/tool -- saved to registry)")
     elif previous["grade"] != final_grade:
         direction = "got WORSE" if final_grade > previous["grade"] else "got better"
         print(f"  *** GRADE CHANGED: {previous['grade']} -> {final_grade} ({direction}) ***")
         print(f"  Previous scan was {time_ago(previous['scanned_at'])}.")
-        print(f"  This is exactly the pattern that catches a \"rug pull\":")
-        print(f"    a server behaving differently than it did last time it was checked.")
+        print("  This is exactly the pattern that catches a \"rug pull\":")
+        print("    a server behaving differently than it did last time it was checked.")
     else:
         print(f"  (unchanged since last scan, {time_ago(previous['scanned_at'])})")
     print("=" * 60 + "\n")

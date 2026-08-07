@@ -189,7 +189,7 @@ def main():
         sys.exit(1)
 
     print(f"Found real entrypoint: {result['bin_name']}")
-    print(f"Built and ran sandbox image. Everything ran with --network none.\n")
+    print("Built and ran sandbox image. Everything ran with --network none.\n")
 
     print("=" * 68)
     print(f"  Server: {result['server_info'].get('name', '?')} v{result['server_info'].get('version', '?')}")
@@ -200,14 +200,14 @@ def main():
         print(f"\n--- {tool['name']} ---")
         print(f"  Declared: \"{tool['description'][:100]}{'...' if len(tool['description']) > 100 else ''}\"")
         print(f"  Static grade (description only): {tool['grade']}")
-        print(f"  Behavior check: not exercised (unknown package - no auto tool-calling)")
+        print("  Behavior check: not exercised (unknown package - no auto tool-calling)")
 
     print(f"\n{'=' * 68}")
     print(f"  Saved {len(result['tools'])} scan(s) to the registry as '{package_name}'.")
-    print(f"  Static checks only - no tool was actually called, so this can't")
-    print(f"  catch the kind of behavioral violation Milestone 3's evil-calculator")
-    print(f"  demo did. It CAN still catch a poisoned description, same as any")
-    print(f"  other scan in this registry.")
+    print("  Static checks only - no tool was actually called, so this can't")
+    print("  catch the kind of behavioral violation Milestone 3's evil-calculator")
+    print("  demo did. It CAN still catch a poisoned description, same as any")
+    print("  other scan in this registry.")
     print("=" * 68)
 
 

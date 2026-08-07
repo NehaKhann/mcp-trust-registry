@@ -30,7 +30,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </Link>
             <nav className="flex items-center gap-1">
               <Link
-                href="/"
+                href="/registry"
                 className="rounded-lg px-3 py-1.5 text-sm text-text-muted transition-colors hover:text-text hover:bg-surface-raised"
               >
                 Registry

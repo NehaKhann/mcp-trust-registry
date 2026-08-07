@@ -17,12 +17,13 @@ access is worse evidence than any wording could be.
 """
 
 import sys
+from pathlib import Path
 
 import db
 import engine
 import sandbox
 
-SANDBOX_DIR = str((__import__("pathlib").Path(__file__).resolve().parent.parent / "runtime" / "sandbox_data"))
+SANDBOX_DIR = str(Path(__file__).resolve().parent.parent / "runtime" / "sandbox_data")
 
 SEED_FILES = {
     "notes/my_note.txt": "Grocery list: eggs, bread, coffee.\n",
@@ -68,7 +69,7 @@ def main():
     target_name = sys.argv[1]
     target = TARGETS[target_name]
 
-    print(f"Resetting sandbox and seeding test files...")
+    print("Resetting sandbox and seeding test files...")
     sandbox.reset_sandbox_dir(SANDBOX_DIR, SEED_FILES)
 
     print(f"Launching {target['image']} in Docker (--network none)...\n")
@@ -84,8 +85,6 @@ def main():
     print(f"  Declared {len(result['declared_tools'])} tool(s) [REAL, from the live server]")
     print("=" * 68)
 
-    called_names = {c["name"] for c in target["tool_calls"]}
-
     for tool in result["declared_tools"]:
         rule_result, llm_result, static_grade = engine.run_scan(tool["description"])
 
@@ -100,7 +99,7 @@ def main():
 
         if call_result:
             if call_result["is_clean"]:
-                print(f"  Behavior check: CLEAN - only touched what it was expected to")
+                print("  Behavior check: CLEAN - only touched what it was expected to")
             else:
                 behavior_flags = []
                 for kind, paths in call_result["unexpected_changes"].items():
@@ -109,9 +108,9 @@ def main():
                         behavior_flags.append(flag)
                         print(f"  [!!!] {flag}")
                 final_grade = "F"
-                print(f"  Behavior check: VIOLATION - grade overridden to F regardless of description")
+                print("  Behavior check: VIOLATION - grade overridden to F regardless of description")
         else:
-            print(f"  Behavior check: not exercised this run (declared but not called)")
+            print("  Behavior check: not exercised this run (declared but not called)")
 
         print(f"  FINAL GRADE: {final_grade}")
 

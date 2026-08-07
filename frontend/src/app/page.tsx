@@ -1,164 +1,170 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { api, type LeaderboardRow } from "@/lib/api";
-import { GradeBadge } from "@/components/GradeBadge";
-import { SourceBadge } from "@/components/SourceBadge";
-import { timeAgo } from "@/lib/format";
 
-export default function DashboardPage() {
-  const [rows, setRows] = useState<LeaderboardRow[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [query, setQuery] = useState("");
+export default function LandingPage() {
+  const [stats, setStats] = useState<{ tools: number; scans: number; flagged: number } | null>(null);
 
   useEffect(() => {
     api
       .leaderboard()
-      .then(setRows)
-      .catch((e) => setError(e.message));
+      .then((rows: LeaderboardRow[]) => {
+        setStats({
+          tools: rows.length,
+          scans: rows.reduce((sum, r) => sum + r.scan_count, 0),
+          flagged: rows.filter((r) => r.grade === "F").length,
+        });
+      })
+      .catch(() => setStats(null));
   }, []);
-
-  const filtered = useMemo(() => {
-    if (!rows) return [];
-    const q = query.trim().toLowerCase();
-    if (!q) return rows;
-    return rows.filter(
-      (r) => r.server_name.toLowerCase().includes(q) || r.tool_name.toLowerCase().includes(q)
-    );
-  }, [rows, query]);
-
-  const stats = useMemo(() => {
-    if (!rows) return null;
-    const flagged = rows.filter((r) => r.grade === "F").length;
-    const totalScans = rows.reduce((sum, r) => sum + r.scan_count, 0);
-    return { servers: rows.length, flagged, totalScans };
-  }, [rows]);
 
   return (
     <div>
-      <div className="mb-8 flex flex-col gap-1">
-        <h1 className="text-2xl font-semibold tracking-tight">Registry</h1>
-        <p className="text-text-muted">
-          Every MCP tool that's been checked so far — declared behavior vs. what the scanners
-          actually found, with a full history per tool.
+      {/* ---------- hero ---------- */}
+      <section className="py-8 sm:py-14">
+        <div className="kicker mb-4 font-mono text-xs uppercase tracking-wide text-accent-ink">
+          Model Context Protocol · trust registry
+        </div>
+        <h1 className="max-w-2xl text-4xl font-semibold tracking-tight text-balance sm:text-5xl">
+          An honest description isn&apos;t proof of honest code.
+        </h1>
+        <p className="mt-5 max-w-xl text-lg text-text-muted">
+          Before you connect a new MCP tool to your AI assistant, check it two ways — what it{" "}
+          <i>claims</i> to do, and what it <i>actually does</i> when run in an isolated,
+          network-blocked sandbox.
         </p>
-      </div>
-
-      {stats && (
-        <div className="mb-8 grid grid-cols-3 gap-3">
-          <StatCard label="Tools tracked" value={stats.servers} />
-          <StatCard label="Total scans" value={stats.totalScans} />
-          <StatCard label="Flagged high-risk" value={stats.flagged} tone={stats.flagged > 0 ? "grade-f" : undefined} />
+        <div className="mt-8 flex flex-wrap items-center gap-3">
+          <Link
+            href="/scan"
+            className="rounded-lg bg-accent px-5 py-3 text-sm font-medium text-accent-contrast transition-opacity hover:opacity-90"
+          >
+            Scan a tool →
+          </Link>
+          <Link
+            href="/registry"
+            className="rounded-lg border border-border px-5 py-3 text-sm text-text-muted transition-colors hover:text-text hover:border-text-faint"
+          >
+            Browse the registry
+          </Link>
         </div>
-      )}
 
-      <div className="mb-4">
-        <input
-          type="text"
-          placeholder="Search by server or tool name…"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          className="w-full rounded-lg border border-border bg-surface px-3.5 py-2.5 text-sm placeholder:text-text-faint focus:outline-none focus:ring-2 focus:ring-accent/40"
-        />
-      </div>
+        {stats && stats.tools > 0 && (
+          <div className="mt-10 flex flex-wrap gap-x-8 gap-y-3 border-t border-border pt-6">
+            <Stat value={stats.tools} label="tools tracked" />
+            <Stat value={stats.scans} label="scans run" />
+            <Stat value={stats.flagged} label="flagged high-risk" tone={stats.flagged > 0 ? "grade-f" : undefined} />
+          </div>
+        )}
+      </section>
 
-      {error && (
-        <div className="rounded-lg border border-grade-f/30 bg-grade-f-soft px-4 py-3 text-sm text-grade-f">
-          Couldn't reach the API at localhost:8001 — is <code className="font-mono">uvicorn main:app</code> running?
-          <div className="mt-1 text-text-muted">{error}</div>
+      {/* ---------- the catch, as proof not just a claim ---------- */}
+      <section className="mb-16 rounded-2xl border border-border bg-surface p-6 sm:p-8">
+        <div className="grid gap-6 sm:grid-cols-[1fr_auto] sm:items-center">
+          <div>
+            <div className="mb-2 font-mono text-xs uppercase tracking-wide text-text-faint">
+              A real result, not a mockup
+            </div>
+            <p className="text-lg text-text">
+              A tool description read as <b className="text-grade-a">clean</b> to a rule engine and
+              an AI model — <i>&ldquo;no phrases suggesting undisclosed actions.&rdquo;</i>{" "}
+              The sandbox caught it copying a planted secret into a disguised file the instant it ran.
+              Grade: <b className="text-grade-f">F</b>.
+            </p>
+          </div>
+          <Link
+            href="/story"
+            className="whitespace-nowrap rounded-lg border border-border px-5 py-3 text-center text-sm font-medium text-text transition-colors hover:border-accent hover:text-accent-ink"
+          >
+            Read the full story →
+          </Link>
         </div>
-      )}
+      </section>
 
-      {!error && rows === null && <LeaderboardSkeleton />}
-
-      {!error && rows !== null && rows.length === 0 && (
-        <EmptyState />
-      )}
-
-      {!error && rows !== null && rows.length > 0 && (
-        <div className="overflow-hidden rounded-xl border border-border">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border bg-surface-raised text-left text-xs uppercase tracking-wide text-text-faint">
-                <th className="px-4 py-3 font-medium">Server / Tool</th>
-                <th className="px-4 py-3 font-medium">Grade</th>
-                <th className="px-4 py-3 font-medium">Verification</th>
-                <th className="px-4 py-3 font-medium">Scans</th>
-                <th className="px-4 py-3 font-medium">Last checked</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((r) => (
-                <tr key={`${r.server_name}/${r.tool_name}`} className="border-b border-border last:border-0">
-                  <td className="px-0 py-0">
-                    <Link
-                      href={`/tool/${encodeURIComponent(r.server_name)}/${encodeURIComponent(r.tool_name)}`}
-                      className="block px-4 py-3.5 transition-colors hover:bg-surface-raised"
-                    >
-                      <div className="font-medium text-text">{r.server_name}</div>
-                      <div className="font-mono text-xs text-text-faint">{r.tool_name}</div>
-                    </Link>
-                  </td>
-                  <td className="px-4 py-3.5">
-                    <GradeBadge grade={r.grade} size="sm" />
-                  </td>
-                  <td className="px-4 py-3.5">
-                    <SourceBadge source={r.source} />
-                  </td>
-                  <td className="px-4 py-3.5 tabular-nums text-text-muted">{r.scan_count}</td>
-                  <td className="px-4 py-3.5 text-text-muted">{timeAgo(r.scanned_at)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      {/* ---------- how it works ---------- */}
+      <section className="mb-16">
+        <h2 className="mb-1 text-xl font-semibold tracking-tight">Three checks, never blended into one score</h2>
+        <p className="mb-8 max-w-2xl text-text-muted">
+          Each engine&apos;s verdict is shown on its own — you can always see exactly which part of a
+          grade came from reading words versus watching actions.
+        </p>
+        <div className="grid gap-4 sm:grid-cols-3">
+          <EngineCard
+            n="01"
+            title="Rule-based engine"
+            body="Plain code checking for known-dangerous patterns — hidden-instruction phrasing, credential references, fake system tags. Fast and predictable, but only ever catches what it was written to look for."
+          />
+          <EngineCard
+            n="02"
+            title="AI semantic engine"
+            body="A model reads the description and judges intent — catching the cases fixed rules miss, like scope creep buried in otherwise-reasonable prose. Forced into structured output, never free-form opinion."
+          />
+          <EngineCard
+            n="03"
+            title="Docker sandbox"
+            body="Runs the real server, network-blocked, and diffs the filesystem before and after every call. Catches what perfect wording can't hide, because it never reads the description at all."
+          />
         </div>
-      )}
+      </section>
+
+      {/* ---------- before you install ---------- */}
+      <section className="mb-16 grid gap-8 sm:grid-cols-2 sm:items-center">
+        <div>
+          <h2 className="mb-3 text-xl font-semibold tracking-tight">
+            Before <code className="font-mono text-lg">git clone</code>, not after
+          </h2>
+          <p className="text-text-muted">
+            Found a new MCP server on GitHub or npm? Paste its declared tools in, or give it a real
+            package name and let the sandbox build and run it live — before that code ever touches
+            your machine for real.
+          </p>
+          <Link href="/scan" className="mt-4 inline-block text-sm font-medium text-accent-ink hover:underline">
+            Try it now →
+          </Link>
+        </div>
+        <div className="rounded-xl border border-border bg-surface-raised p-5 font-mono text-xs text-text-muted">
+          <div className="mb-2 text-text-faint"># the same check, from a terminal</div>
+          <div className="text-text">cd scanner</div>
+          <div className="text-text">python scan_package.py @scope/some-mcp-server</div>
+          <div className="mt-3 text-grade-a">✓ Built and ran sandbox image (--network none)</div>
+          <div className="text-grade-a">✓ Declared 6 real tools, graded</div>
+        </div>
+      </section>
+
+      {/* ---------- footer cta ---------- */}
+      <section className="border-t border-border py-10 text-center">
+        <p className="mb-4 text-text-muted">Zero-cost by design — local Ollama or Groq&apos;s free tier, self-hosted Docker sandbox, no paid API required.</p>
+        <div className="flex flex-wrap items-center justify-center gap-3">
+          <Link
+            href="/registry"
+            className="rounded-lg bg-accent px-5 py-3 text-sm font-medium text-accent-contrast transition-opacity hover:opacity-90"
+          >
+            Browse the registry →
+          </Link>
+        </div>
+      </section>
     </div>
   );
 }
 
-function StatCard({ label, value, tone }: { label: string; value: number; tone?: string }) {
+function Stat({ value, label, tone }: { value: number; label: string; tone?: string }) {
   return (
-    <div className="rounded-xl border border-border bg-surface px-4 py-3.5">
+    <div>
       <div className={`font-mono text-2xl font-semibold tabular-nums ${tone ? `text-${tone}` : "text-text"}`}>
         {value}
       </div>
-      <div className="mt-0.5 text-xs text-text-muted">{label}</div>
+      <div className="text-xs text-text-faint">{label}</div>
     </div>
   );
 }
 
-function LeaderboardSkeleton() {
+function EngineCard({ n, title, body }: { n: string; title: string; body: string }) {
   return (
-    <div className="overflow-hidden rounded-xl border border-border">
-      {[...Array(4)].map((_, i) => (
-        <div key={i} className="flex items-center gap-4 border-b border-border px-4 py-4 last:border-0">
-          <div className="h-4 w-40 animate-pulse rounded bg-surface-raised" />
-          <div className="h-6 w-6 animate-pulse rounded bg-surface-raised" />
-          <div className="h-4 w-16 animate-pulse rounded bg-surface-raised" />
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function EmptyState() {
-  return (
-    <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-border py-16 text-center">
-      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-raised text-text-faint">
-        ?
-      </div>
-      <div>
-        <div className="font-medium text-text">Nothing scanned yet</div>
-        <p className="mt-1 max-w-sm text-sm text-text-muted">
-          Run the CLI (<code className="font-mono">python scan.py …</code>) or use{" "}
-          <Link href="/scan" className="text-accent hover:underline">
-            Scan a tool
-          </Link>{" "}
-          to add the first entry to the registry.
-        </p>
-      </div>
+    <div className="rounded-xl border border-border bg-surface p-5">
+      <div className="mb-3 font-mono text-xs text-text-faint">{n}</div>
+      <h3 className="mb-2 font-medium text-text">{title}</h3>
+      <p className="text-sm text-text-muted">{body}</p>
     </div>
   );
 }
