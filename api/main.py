@@ -26,9 +26,12 @@ import scan_package as scan_package_module
 
 app = FastAPI(title="MCP Trust Registry API")
 
+# Comma-separated in production (e.g. the deployed Vercel URL); always
+# includes localhost:3000 so local dev against a deployed API still works.
+_extra_origins = [o.strip() for o in os.environ.get("ALLOWED_ORIGINS", "").split(",") if o.strip()]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=["http://localhost:3000", *_extra_origins],
     allow_methods=["*"],
     allow_headers=["*"],
 )

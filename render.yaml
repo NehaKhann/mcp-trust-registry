@@ -1,0 +1,25 @@
+# Render "Blueprint" - infrastructure as code. Render reads this when you
+# connect the repo via New+ -> Blueprint, and provisions the service with
+# everything below pre-filled. sync:false env vars are secrets - Render
+# prompts for those in the dashboard instead of storing them in this
+# committed file.
+services:
+  - type: web
+    name: mcp-trust-registry-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    plan: free
+    region: oregon
+    healthCheckPath: /api/health
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: LLM_PROVIDER
+        value: groq
+      - key: GROQ_API_KEY
+        sync: false
+      - key: ALLOW_LIVE_PACKAGE_SCAN
+        value: "false"
+      - key: ALLOWED_ORIGINS
+        sync: false

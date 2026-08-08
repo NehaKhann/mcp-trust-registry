@@ -1,0 +1,9 @@
+frontend/
+runtime/
+samples/
+data/
+.git/
+**/__pycache__/
+**/*.pyc
+.venv/
+venv/
