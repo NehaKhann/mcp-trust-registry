@@ -1,5 +1,23 @@
 # MCP Trust Registry
 
+**🔗 [Live site](https://mcp-trust-registry.vercel.app)** — real registry, real scans, nothing staged.
+Built solo, deployed for $0/month. ([API health](https://mcp-trust-registry-api.onrender.com/api/health))
+
+<p align="center">
+  <img src="docs/screenshots/landing.png" width="760" alt="MCP Trust Registry landing page">
+</p>
+
+**Try it in 30 seconds:** open [`/scan`](https://mcp-trust-registry.vercel.app/scan), click
+*"Real tool, from GitHub,"* hit **Run scan** — or read
+[**the story**](https://mcp-trust-registry.vercel.app/story) of the one time this project caught
+something both its own rule engine and its own AI missed:
+
+<p align="center">
+  <img src="docs/screenshots/story.png" width="760" alt="A tool graded clean by both static engines, caught by the sandbox">
+</p>
+
+## What it does
+
 Checks whether an MCP tool's description is honestly describing itself to a
 human, or secretly trying to manipulate the AI reading it ("tool
 poisoning"); keeps a history so a tool that behaves well at first and turns
@@ -11,6 +29,23 @@ entirely for $0 — locally, the AI check uses a local Ollama model, no API
 key required; deployed, it uses Groq's free tier instead, since a public
 server can't reach a model running on a developer's laptop (see
 [Deployment](#deployment)).
+
+**Stack:** Next.js · TypeScript · Tailwind v4 · FastAPI · Python · PostgreSQL · Docker · Groq /
+Ollama — deployed on Vercel + Render + Neon, entirely on free tiers.
+
+```mermaid
+flowchart LR
+  subgraph deployed["Deployed (mcp-trust-registry.vercel.app)"]
+    V["Vercel<br/>Next.js frontend"] --> R["Render<br/>FastAPI backend"]
+    R --> N[("Neon<br/>Postgres")]
+    R --> G["Groq<br/>free-tier LLM"]
+  end
+  subgraph local["Local dev / CLI"]
+    C["CLI scripts"] --> O["Ollama<br/>local LLM"]
+    C --> P[("Docker<br/>Postgres")]
+    C --> D["Docker sandbox<br/>real MCP servers"]
+  end
+```
 
 ## How it works
 
@@ -29,8 +64,8 @@ side by side, never blended into one opaque score:
   when deployed — same prompt, same output shape, same downstream code
   either way.
 
-Every scan result is saved to a local SQLite registry (`scanner/db.py`).
-Before saving a new scan, the scanner checks whether this exact
+Every scan result is saved to the registry (`scanner/db.py`, Postgres —
+see [The database](#the-database)). Before saving a new scan, the scanner checks whether this exact
 server+tool was ever scanned before — if the grade changed, it's flagged
 immediately in the report, not buried in a table you'd have to go look at.
 
@@ -99,6 +134,15 @@ Next.js frontend (`frontend/`) puts a real UI on top of it — a
 leaderboard, a per-tool timeline with grade-change markers, and a live
 "scan a tool" page anyone can try without touching a terminal.
 
+<p align="center">
+  <img src="docs/screenshots/registry.png" width="760" alt="Registry leaderboard showing Verified in sandbox vs Static only badges">
+</p>
+
+Note the **Verification** column — "Verified in sandbox" vs. "Static only"
+isn't decoration, it's the actual `source` column from the database. A
+scan that only ever read a description is never shown as more trustworthy
+than it is.
+
 ```bash
 # terminal 1 — API (wraps the exact same scanner/db.py the CLI uses)
 cd api
@@ -112,7 +156,7 @@ npm run dev
 ```
 
 Open **http://localhost:3000**. The dashboard, detail pages, and CLI all
-read/write the same SQLite registry, so a scan from any of them shows up
+read/write the same Postgres registry, so a scan from any of them shows up
 everywhere else.
 
 ## Behavioral sandbox: real servers, not files we wrote
@@ -271,10 +315,22 @@ behavior_flags columns), the leaderboard's window-function query, and the
 live frontend all re-tested and confirmed working identically to the
 SQLite version.
 
-## Next milestones
+## Milestones
 
 1. ~~Description scanner (rules + local LLM, CLI)~~ — done
 2. ~~Save every scan to a database, detect grade changes over time~~ — done
 3. ~~Public web dashboard (Next.js + FastAPI)~~ — done, built ahead of #4 below
 4. ~~Run a real MCP server in Docker and compare declared vs. actual behavior~~ — done
-5. Deploy live for free, write the full portfolio README
+5. ~~Deploy live for free, write the full portfolio README~~ — done. First deploy attempt
+   was Fly.io; switched to Render after finding Fly's free tier no longer exists for new
+   accounts (2024) — verified *before* committing this time, not after. Live at
+   [mcp-trust-registry.vercel.app](https://mcp-trust-registry.vercel.app), $0/month:
+   Vercel (frontend) + Render (API) + Neon (Postgres) + Groq (LLM), all genuinely-free
+   tiers, no card on file anywhere.
+
+**What's deliberately not done:** the live site can't sandbox-scan an arbitrary npm
+package (`ALLOW_LIVE_PACKAGE_SCAN` is off in production, by design — see
+[Scanning any real package](#scanning-any-real-package-not-just-the-two-built-in-targets))
+and can't verify *behavior* for a package it's never seen (only the two hand-built
+targets, `filesystem` and `evil-calculator`, have a real tool-call test plan). Both are
+named, explained limits, not gaps that were missed.
