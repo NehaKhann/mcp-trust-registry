@@ -35,15 +35,15 @@ Ollama — deployed on Vercel + Render + Neon, entirely on free tiers.
 
 ```mermaid
 flowchart LR
-  subgraph deployed["Deployed (mcp-trust-registry.vercel.app)"]
-    V["Vercel<br/>Next.js frontend"] --> R["Render<br/>FastAPI backend"]
-    R --> N[("Neon<br/>Postgres")]
-    R --> G["Groq<br/>free-tier LLM"]
+  subgraph Deployed
+    V[Vercel frontend] --> R[Render API]
+    R --> N[(Neon Postgres)]
+    R --> G[Groq LLM]
   end
-  subgraph local["Local dev / CLI"]
-    C["CLI scripts"] --> O["Ollama<br/>local LLM"]
-    C --> P[("Docker<br/>Postgres")]
-    C --> D["Docker sandbox<br/>real MCP servers"]
+  subgraph Local
+    C[CLI scripts] --> O[Ollama]
+    C --> P[(Docker Postgres)]
+    C --> D[Docker sandbox]
   end
 ```
 
