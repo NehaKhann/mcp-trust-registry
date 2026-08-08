@@ -1,0 +1,20 @@
+# Local Postgres for development. Deployed, DATABASE_URL points at a real
+# hosted Postgres (Neon free tier) instead - same schema, same db.py, no
+# code branches between "local" and "deployed" database code, unlike the
+# LLM provider split (which genuinely needs two implementations because
+# Ollama and Groq are different APIs; here it's the same SQL either way,
+# just a different connection string).
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: mcp_registry
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

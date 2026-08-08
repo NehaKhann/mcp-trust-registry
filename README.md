@@ -36,7 +36,10 @@ immediately in the report, not buried in a table you'd have to go look at.
 
 ## Run it
 
-Requires Ollama running locally (`ollama serve`) with `qwen2.5:3b` pulled.
+Requires Ollama running locally (`ollama serve`) with `qwen2.5:3b` pulled,
+and Postgres running (`docker compose up -d` from the project root - the
+scanner scripts default to `postgresql://postgres:postgres@localhost:5433/mcp_registry`,
+matching that compose file).
 
 ```bash
 cd scanner
@@ -246,6 +249,27 @@ GROQ_API_KEY=<your key from console.groq.com>
 Nothing else changes — `engine.py`, `scan.py`, `api/main.py` all just call
 `llm_check.scan_description()` and get the same shape back regardless of
 which provider answered.
+
+### The database
+
+The registry started on SQLite (a file next to the code) - zero setup,
+but a plain file doesn't persist the way you'd want on most free hosting,
+and only one process can safely write to it at a time. Migrated to
+Postgres, connected via `DATABASE_URL`:
+
+| | Local dev | Deployed |
+|---|---|---|
+| Where | Docker (`docker compose up -d`) | [Neon](https://neon.tech) free tier |
+| Cost | $0, always | $0 (free tier, no card, wakes on request) |
+
+`db.py` is the only file that changed - every caller (`scan.py`,
+`scan_live.py`, `scan_package.py`, `history.py`, `api/main.py`) only ever
+calls its functions, never raw SQL, so none of them needed to change at
+all. Verified against a local Postgres container before touching a real
+cloud database: every CLI script, the sandboxed-scan path (source +
+behavior_flags columns), the leaderboard's window-function query, and the
+live frontend all re-tested and confirmed working identically to the
+SQLite version.
 
 ## Next milestones
 
