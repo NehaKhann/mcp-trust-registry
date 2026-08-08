@@ -22,7 +22,7 @@ export function EngineResultPanel({
   llmError,
 }: EngineResultPanelProps) {
   return (
-    <div className="grid grid-cols-2 gap-6">
+    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
       <div>
         <h3 className="mb-2 text-xs font-medium uppercase tracking-wide text-text-faint">Rule-based engine</h3>
         <div className="mb-2 font-mono text-sm text-text-muted">Risk score: {ruleScore}/100</div>

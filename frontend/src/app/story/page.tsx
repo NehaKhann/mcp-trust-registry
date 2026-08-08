@@ -58,7 +58,7 @@ export default function StoryPage() {
         </Beat>
 
         <Beat n="2" title="The static checks came back clean">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="rounded-lg border border-border bg-surface p-4">
               <div className="mb-1 text-xs font-medium uppercase tracking-wide text-text-faint">
                 Rule-based engine
@@ -108,7 +108,7 @@ export default function StoryPage() {
         </Beat>
 
         <Beat n="5" title="Verdict">
-          <div className="flex items-center gap-4">
+          <div className="flex items-start gap-4">
             <GradeBadge grade={scan.grade} size="lg" />
             <p className="text-sm text-text-muted">
               A tool that passed every text-based check failed the only check that mattered: what it

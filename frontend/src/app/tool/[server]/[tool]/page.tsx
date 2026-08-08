@@ -47,12 +47,12 @@ export default function ToolDetailPage() {
         ← Registry
       </Link>
 
-      <div className="mb-4 flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">{server}</h1>
-          <div className="mt-0.5 font-mono text-sm text-text-faint">{tool}</div>
+      <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <h1 className="text-xl font-semibold tracking-tight break-words sm:text-2xl">{server}</h1>
+          <div className="mt-0.5 break-words font-mono text-sm text-text-faint">{tool}</div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-none items-center gap-3">
           <GradeBadge grade={latest.grade} size="lg" />
           <GradeLabel grade={latest.grade} />
         </div>
@@ -103,14 +103,14 @@ export default function ToolDetailPage() {
             const prev = arr[i + 1];
             const changed = prev && prev.grade !== s.grade;
             return (
-              <li key={s.id} className="flex items-center gap-3 border-b border-border py-3 last:border-0">
+              <li key={s.id} className="flex flex-wrap items-center gap-3 border-b border-border py-3 last:border-0">
                 <GradeBadge grade={s.grade} size="sm" />
-                <div className="flex-1">
+                <div className="min-w-0 flex-1">
                   <div className="text-sm text-text">{timeAgo(s.scanned_at)}</div>
                   <div className="text-xs text-text-faint">{s.scanned_at.slice(0, 19).replace("T", " ")}</div>
                 </div>
                 {changed && (
-                  <span className="rounded-full bg-grade-f-soft px-2.5 py-1 font-mono text-xs font-medium text-grade-f">
+                  <span className="flex-none whitespace-nowrap rounded-full bg-grade-f-soft px-2.5 py-1 font-mono text-xs font-medium text-grade-f">
                     CHANGED from {prev.grade}
                   </span>
                 )}

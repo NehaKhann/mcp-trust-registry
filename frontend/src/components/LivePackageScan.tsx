@@ -68,7 +68,7 @@ export function LivePackageScan() {
         here instead.
       </p>
 
-      <form onSubmit={handleSubmit} className="flex gap-2">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-2 sm:flex-row">
         <input
           required
           value={packageName}

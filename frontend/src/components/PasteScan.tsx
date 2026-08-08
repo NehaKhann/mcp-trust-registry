@@ -109,7 +109,7 @@ export function PasteScan() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label="Server name">
             <input
               required
@@ -167,17 +167,17 @@ export function PasteScan() {
 
       {result && (
         <div className="mt-8 rounded-xl border border-border bg-surface p-6">
-          <div className="mb-5 flex items-center justify-between">
-            <div className="flex items-center gap-3">
+          <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex min-w-0 items-center gap-3">
               <GradeBadge grade={result.grade} size="lg" />
-              <div>
-                <div className="font-medium">{result.server_name}</div>
+              <div className="min-w-0">
+                <div className="break-words font-medium">{result.server_name}</div>
                 <GradeLabel grade={result.grade} />
               </div>
             </div>
             <Link
               href={`/tool/${encodeURIComponent(result.server_name)}/${encodeURIComponent(result.tool_name)}`}
-              className="text-sm text-accent hover:underline"
+              className="whitespace-nowrap text-sm text-accent hover:underline"
             >
               View full history →
             </Link>

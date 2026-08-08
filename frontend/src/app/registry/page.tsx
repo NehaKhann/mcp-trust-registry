@@ -46,7 +46,7 @@ export default function RegistryPage() {
       </div>
 
       {stats && (
-        <div className="mb-8 grid grid-cols-3 gap-3">
+        <div className="mb-8 grid grid-cols-1 gap-3 sm:grid-cols-3">
           <StatCard label="Tools tracked" value={stats.servers} />
           <StatCard label="Total scans" value={stats.totalScans} />
           <StatCard label="Flagged high-risk" value={stats.flagged} tone={stats.flagged > 0 ? "grade-f" : undefined} />
@@ -77,8 +77,8 @@ export default function RegistryPage() {
       )}
 
       {!error && rows !== null && rows.length > 0 && (
-        <div className="overflow-hidden rounded-xl border border-border">
-          <table className="w-full text-sm">
+        <div className="overflow-x-auto rounded-xl border border-border">
+          <table className="w-full min-w-[640px] text-sm">
             <thead>
               <tr className="border-b border-border bg-surface-raised text-left text-xs uppercase tracking-wide text-text-faint">
                 <th className="px-4 py-3 font-medium">Server / Tool</th>
