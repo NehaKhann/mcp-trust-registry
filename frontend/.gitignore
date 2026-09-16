@@ -43,3 +43,7 @@ next-env.d.ts
 
 .vercel
 .env*
+
+# AI tool scaffolding, auto-generated locally, not part of the project
+AGENTS.md
+CLAUDE.md

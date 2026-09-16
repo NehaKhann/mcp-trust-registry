@@ -49,7 +49,7 @@ export default function RegistryPage() {
         <div className="mb-8 grid grid-cols-1 gap-3 sm:grid-cols-3">
           <StatCard label="Tools tracked" value={stats.servers} />
           <StatCard label="Total scans" value={stats.totalScans} />
-          <StatCard label="Flagged high-risk" value={stats.flagged} tone={stats.flagged > 0 ? "grade-f" : undefined} />
+          <StatCard label="Flagged high-risk" value={stats.flagged} danger={stats.flagged > 0} />
         </div>
       )}
 
@@ -118,10 +118,10 @@ export default function RegistryPage() {
   );
 }
 
-function StatCard({ label, value, tone }: { label: string; value: number; tone?: string }) {
+function StatCard({ label, value, danger }: { label: string; value: number; danger?: boolean }) {
   return (
     <div className="rounded-xl border border-border bg-surface px-4 py-3.5">
-      <div className={`font-mono text-2xl font-semibold tabular-nums ${tone ? `text-${tone}` : "text-text"}`}>
+      <div className={`font-mono text-2xl font-semibold tabular-nums ${danger ? "text-grade-f" : "text-text"}`}>
         {value}
       </div>
       <div className="mt-0.5 text-xs text-text-muted">{label}</div>

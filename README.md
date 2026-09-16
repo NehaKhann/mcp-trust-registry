@@ -16,6 +16,22 @@ something both its own rule engine and its own AI missed:
   <img src="docs/screenshots/story.png" width="760" alt="A tool graded clean by both static engines, caught by the sandbox">
 </p>
 
+### For the non-technical reader
+
+MCP (Model Context Protocol) is the emerging standard that lets AI
+assistants like Claude or ChatGPT plug into outside tools — read a file,
+hit an API, run code — the same way a browser extension plugs into a
+browser. That's what makes AI assistants genuinely useful, and it's also
+the risk: anyone can publish an MCP tool, and its written description is
+the only thing a human sees before an AI starts trusting it with real
+actions. This project automates that trust check — reading what a tool
+*claims* and, in a sandboxed run, watching what it *actually does* —
+before it ever touches a real machine. Building it also meant standing up
+and operating a real multi-service system end to end (a web frontend, an
+API, a database, an AI model, and a Docker sandbox, each a separate hosted
+service) and keeping it live at $0/month — the same operational discipline
+production software needs, not just a demo that runs once on a laptop.
+
 ## What it does
 
 Checks whether an MCP tool's description is honestly describing itself to a
@@ -293,6 +309,14 @@ GROQ_API_KEY=<your key from console.groq.com>
 Nothing else changes — `engine.py`, `scan.py`, `api/main.py` all just call
 `llm_check.scan_description()` and get the same shape back regardless of
 which provider answered.
+
+**Free-tier caveats, stated up front:** Render's free web service spins
+down after ~15 minutes idle, so the first request after a quiet period
+takes 20-50s to wake back up instead of responding instantly — expected
+behavior of the free tier, not a bug, but worth knowing before you hit
+"Run scan" on a cold instance. The Groq free tier caps at 30 requests/min
+and 1,000/day; well above anything a portfolio demo generates, but a real
+limit, not an unlimited one.
 
 ### The database
 

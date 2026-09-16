@@ -122,7 +122,7 @@ def save_scan(server_name: str, tool_name: str, description: str,
     return scan_id
 
 
-def get_history(server_name: str = None, tool_name: str = None) -> list[dict]:
+def get_history(server_name: str | None = None, tool_name: str | None = None) -> list[dict]:
     conn = get_connection()
     if server_name and tool_name:
         rows = conn.execute(

@@ -77,6 +77,8 @@ def print_report(tool: dict, rule_result: dict, llm_result: dict,
     if previous is None:
         print("  (first scan of this server/tool -- saved to registry)")
     elif previous["grade"] != final_grade:
+        # Grades are A/B/C/F (no D/E), which happen to sort alphabetically
+        # in severity order, so straight string comparison works here.
         direction = "got WORSE" if final_grade > previous["grade"] else "got better"
         print(f"  *** GRADE CHANGED: {previous['grade']} -> {final_grade} ({direction}) ***")
         print(f"  Previous scan was {time_ago(previous['scanned_at'])}.")

@@ -60,7 +60,6 @@ def leaderboard():
     return db.get_leaderboard()
 
 
-
 # server_name uses the ":path" converter because scoped npm packages
 # (e.g. "@modelcontextprotocol/server-memory") contain a literal "/" -
 # FastAPI's default path parameter can't match that even when it's

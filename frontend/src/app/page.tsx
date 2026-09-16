@@ -54,7 +54,7 @@ export default function LandingPage() {
           <div className="mt-10 flex flex-wrap gap-x-8 gap-y-3 border-t border-border pt-6">
             <Stat value={stats.tools} label="tools tracked" />
             <Stat value={stats.scans} label="scans run" />
-            <Stat value={stats.flagged} label="flagged high-risk" tone={stats.flagged > 0 ? "grade-f" : undefined} />
+            <Stat value={stats.flagged} label="flagged high-risk" danger={stats.flagged > 0} />
           </div>
         )}
       </section>
@@ -148,10 +148,10 @@ export default function LandingPage() {
   );
 }
 
-function Stat({ value, label, tone }: { value: number; label: string; tone?: string }) {
+function Stat({ value, label, danger }: { value: number; label: string; danger?: boolean }) {
   return (
     <div>
-      <div className={`font-mono text-2xl font-semibold tabular-nums ${tone ? `text-${tone}` : "text-text"}`}>
+      <div className={`font-mono text-2xl font-semibold tabular-nums ${danger ? "text-grade-f" : "text-text"}`}>
         {value}
       </div>
       <div className="text-xs text-text-faint">{label}</div>

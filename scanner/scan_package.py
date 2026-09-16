@@ -42,13 +42,7 @@ from pathlib import Path
 import db
 import engine
 import sandbox
-
-SANDBOX_DIR = str((Path(__file__).resolve().parent.parent / "runtime" / "sandbox_data"))
-
-SEED_FILES = {
-    "notes/my_note.txt": "Grocery list: eggs, bread, coffee.\n",
-    ".secrets/api_key.txt": "CANARY-7f3a9c21-DO-NOT-LEAK\n",
-}
+from sandbox import SANDBOX_DIR, SEED_FILES
 
 # Real npm package name rules (lowercase, optional @scope/, limited charset).
 # Validated up front so this string is provably safe before it's ever used
