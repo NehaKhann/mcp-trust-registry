@@ -8,9 +8,15 @@ Built solo, deployed for $0/month. ([API health](https://mcp-trust-registry-api.
 </p>
 
 **Try it in 30 seconds:** open [`/scan`](https://mcp-trust-registry.vercel.app/scan), click
-*"Real tool, from GitHub,"* hit **Run scan** — or read
-[**the story**](https://mcp-trust-registry.vercel.app/story) of the one time this project caught
-something both its own rule engine and its own AI missed:
+*"Real tool, from GitHub,"* hit **Run scan** — a real, live grade in a few seconds, both
+engines shown side by side:
+
+<p align="center">
+  <img src="docs/screenshots/scan-result.png" width="760" alt="A live scan result: rule engine and AI engine both shown separately, graded A">
+</p>
+
+Or read [**the story**](https://mcp-trust-registry.vercel.app/story) of the one time this
+project caught something both its own rule engine and its own AI missed:
 
 <p align="center">
   <img src="docs/screenshots/story.png" width="760" alt="A tool graded clean by both static engines, caught by the sandbox">
