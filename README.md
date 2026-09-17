@@ -295,7 +295,7 @@ for it reliably), the AI engine is provider-pluggable:
 | | Local dev (default) | Deployed |
 |---|---|---|
 | Provider | Ollama, `localhost:11434` | [Groq](https://console.groq.com) free tier |
-| Model | `qwen2.5:3b` | `llama-3.1-8b-instant` |
+| Model | `qwen2.5:3b` | `openai/gpt-oss-20b` |
 | Cost | $0, always | $0 (free tier: 30 req/min, 1,000/day) |
 | Setup | `ollama serve` | One free API key |
 

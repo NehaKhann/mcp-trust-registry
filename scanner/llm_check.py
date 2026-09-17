@@ -29,7 +29,9 @@ OLLAMA_URL = "http://localhost:11434/api/generate"
 OLLAMA_MODEL = "qwen2.5:3b"
 
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
-GROQ_MODEL = "llama-3.1-8b-instant"
+# llama-3.1-8b-instant was retired from Groq's catalog; gpt-oss-20b is the
+# current comparably-sized, fast, JSON-mode-capable replacement.
+GROQ_MODEL = "openai/gpt-oss-20b"
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
 
 SYSTEM_PROMPT = """You are a security analyst reviewing tool descriptions used by AI \
